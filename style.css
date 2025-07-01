@@ -1,71 +1,93 @@
-/* ——— reset léger ——— */
-* { box-sizing: border-box; margin: 0; padding: 0; }
-
 body {
-  font-family: Arial, sans-serif;
-  background: #f4f4f9;
-  color: #222;
-  text-align: center;
-  padding: 20px;
+  font-family: sans-serif;
+  margin: 0;
+  padding: 0;
+  background: #fff;
+  color: #000;
+  transition: background 0.3s, color 0.3s;
 }
 
-header h1 { margin-bottom: 15px; }
+body.dark {
+  background: #121212;
+  color: #f0f0f0;
+}
+
+nav {
+  display: flex;
+  gap: 10px;
+  padding: 10px;
+}
 
 nav button {
-  margin: 0 5px;
-  padding: 8px 16px;
-  border: none;
-  border-radius: 6px;
-  background: #e0e0e0;
+  padding: 10px 20px;
   cursor: pointer;
-  font-weight: 600;
+  background: #eee;
+  border: none;
+  border-radius: 5px;
 }
-nav button.active { background: #5c6bc0; color: #fff; }
 
-#match-container {
-  display: flex;
-  justify-content: center;
-  gap: 20px;
-  margin: 25px 0;
-  flex-wrap: wrap;
+nav button.active {
+  background: #2196f3;
+  color: white;
 }
 
 .card {
-  width: 360px;
-  position: relative;
-}
-.card iframe, .card img {
-  width: 100%;
-  height: 203px;
-  border-radius: 10px;
-  border: 2px solid #444;
-  object-fit: cover;
-}
-.card .title {
-  margin-top: 6px;
-  font-weight: 700;
+  flex: 1;
+  text-align: center;
+  padding: 10px;
 }
 
-#vote-buttons { margin: 20px 0; }
+.card img {
+  max-width: 100%;
+  height: auto;
+  border: 2px solid #ccc;
+  border-radius: 8px;
+}
+
+#match {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  padding: 20px;
+}
+
+#vote-buttons {
+  text-align: center;
+  margin: 20px 0;
+}
+
 #vote-buttons button {
-  padding: 10px 25px;
+  padding: 10px 20px;
+  margin: 0 10px;
   font-size: 16px;
-  border: none;
-  border-radius: 6px;
-  background: #5c6bc0;
-  color: #fff;
   cursor: pointer;
-  margin: 0 8px;
-}
-#vote-buttons button[disabled] {
-  background: #bbb;
-  cursor: default;
 }
 
-#results ol {
-  list-style: decimal inside;
-  margin: 15px auto;
-  max-width: 500px;
-  text-align: left;
+#results {
+  padding: 20px;
 }
-#results li { margin-bottom: 6px; }
+
+#toggle-theme {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  padding: 5px 12px;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+body.dark nav button.active,
+body.dark #vote-buttons button {
+  background: #90caf9;
+  color: #000;
+}
+
+body.dark nav button:not(.active),
+body.dark #vote-buttons button[disabled] {
+  background: #333;
+  color: #ccc;
+}
+
+body.dark .card img {
+  border-color: #999;
+}
