@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Tournoi Openings / Animes</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+  <header>
+    <h1>Tournoi 1 v 1</h1>
+    <nav>
+      <!-- Menu : choix du mode -->
+      <button id="btn-openings" class="active">Openings</button>
+      <button id="btn-animes">Animes</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- Zone d’affichage des vidéos / images -->
+    <div id="match-container">
+      <div class="card" id="slot1"></div>
+      <div class="card" id="slot2"></div>
+    </div>
+
+    <!-- Boutons de vote -->
+    <div id="vote-buttons">
+      <button id="vote1" disabled>Vote 1</button>
+      <button id="vote2" disabled>Vote 2</button>
+    </div>
+
+    <!-- Résultats finaux -->
+    <section id="results"></section>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
