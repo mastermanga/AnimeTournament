@@ -26,22 +26,33 @@
     width: 300px;
     text-align: center;
     box-shadow: 0 0 10px #333;
+    cursor: pointer;
+    user-select: none;
+    transition: transform 0.2s;
+  }
+  .anime:hover {
+    transform: scale(1.05);
   }
   .anime img {
     width: 100%;
     height: auto;
     border-radius: 10px;
   }
+  #buttons {
+    margin-top: 10px;
+    display: flex;
+    gap: 20px;
+  }
   #buttons button {
     background-color: #444;
     color: #eee;
     border: none;
     padding: 12px 20px;
-    margin: 0 10px;
     font-size: 16px;
     cursor: pointer;
     border-radius: 8px;
     transition: background-color 0.3s;
+    flex: 1;
   }
   #buttons button:hover {
     background-color: #666;
@@ -71,28 +82,27 @@
 <h1>Anime 1v1 Championship</h1>
 
 <div id="duel-container">
-  <div class="anime" id="anime1">
+  <div class="anime" id="anime1" tabindex="0" role="button" aria-pressed="false">
     <img src="" alt="Anime 1" />
     <h3></h3>
   </div>
-  <div class="anime" id="anime2">
+  <div class="anime" id="anime2" tabindex="0" role="button" aria-pressed="false">
     <img src="" alt="Anime 2" />
     <h3></h3>
   </div>
 </div>
 
 <div id="buttons">
-  <button id="choose1">Gagner</button>
-  <button id="choose2">Gagner</button>
+  <button id="choose1" aria-label="Choisir anime 1"></button>
+  <button id="choose2" aria-label="Choisir anime 2"></button>
 </div>
 
 <div id="classement"></div>
 
 <script>
 (async () => {
-  // Charge le JSON animes.json (doit être dans le même dossier)
   const response = await fetch('animes.json');
-  if(!response.ok) {
+  if (!response.ok) {
     alert("Erreur lors du chargement du fichier animes.json");
     return;
   }
@@ -101,37 +111,65 @@
   function chooseRandom(animes, n) {
     const copy = [...animes];
     const chosen = [];
-    for(let i = 0; i < n && copy.length > 0; i++) {
+    for (let i = 0; i < n && copy.length > 0; i++) {
       const idx = Math.floor(Math.random() * copy.length);
       chosen.push(copy.splice(idx, 1)[0]);
     }
     return chosen;
   }
 
+  // Pour s'assurer que chaque anime fait exactement duelCountPerAnime 1v1 contre des adversaires différents
+  // On va générer une liste complète de matchs équilibrés
+
   const TOTAL_ANIMES = 16;
   const duelCountPerAnime = 5;
 
+  // Choix des 16 animés random
   const animes = chooseRandom(rawAnimes, TOTAL_ANIMES).map(a => ({
     title: a.title,
     image: a.image
   }));
 
+  // Génération des matchs : chaque anime affronte duelCountPerAnime adversaires distincts
+  // Si pas possible d'avoir 5 adversaires distincts (ex: si TOTAL_ANIMES < duelCountPerAnime + 1), on ajuste
+  const maxOpponents = Math.min(duelCountPerAnime, TOTAL_ANIMES - 1);
+
   const matches = [];
-  for(let i=0; i < animes.length; i++) {
-    const opponents = new Set();
-    while(opponents.size < duelCountPerAnime) {
+
+  // Pour équilibrer, on crée un tableau des adversaires possibles pour chaque anime
+  // Puis on tire au hasard les adversaires sans répétition
+  for (let i = 0; i < animes.length; i++) {
+    const opponentsSet = new Set();
+    while (opponentsSet.size < maxOpponents) {
       const opp = Math.floor(Math.random() * animes.length);
-      if(opp !== i && !opponents.has(opp)) {
-        opponents.add(opp);
-        matches.push({a1: i, a2: opp, winner: 0});
+      if (opp !== i && !opponentsSet.has(opp)) {
+        opponentsSet.add(opp);
       }
     }
+    opponentsSet.forEach(opp => {
+      // Pour éviter les doublons (matchs dans les deux sens), on ordonne et on vérifie
+      const a = Math.min(i, opp);
+      const b = Math.max(i, opp);
+      if (!matches.some(m => (m.a1 === a && m.a2 === b))) {
+        matches.push({ a1: a, a2: b, winner: 0 });
+      }
+    });
   }
+
+  // On shuffle les matchs pour un ordre bien random
+  function shuffle(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+  }
+  shuffle(matches);
 
   let currentMatchIndex = 0;
 
   function showMatch() {
-    if(currentMatchIndex >= matches.length) {
+    if (currentMatchIndex >= matches.length) {
       showClassement();
       return;
     }
@@ -149,6 +187,10 @@
     anime2Div.querySelector("img").src = anime2.image;
     anime2Div.querySelector("img").alt = anime2.title;
     anime2Div.querySelector("h3").textContent = anime2.title;
+
+    // Met à jour les boutons avec le titre
+    document.querySelector("#choose1").textContent = anime1.title;
+    document.querySelector("#choose2").textContent = anime2.title;
   }
 
   function recordWin(winnerIndex) {
@@ -160,6 +202,10 @@
   document.querySelector("#choose1").onclick = () => recordWin(1);
   document.querySelector("#choose2").onclick = () => recordWin(2);
 
+  // Clic sur image aussi
+  document.querySelector("#anime1").onclick = () => recordWin(1);
+  document.querySelector("#anime2").onclick = () => recordWin(2);
+
   function showClassement() {
     document.querySelector("#buttons").style.display = "none";
     document.querySelector("#duel-container").style.display = "none";
@@ -167,11 +213,11 @@
     const stats = animes.map(() => ({ wins: 0, matches: 0 }));
 
     matches.forEach(m => {
-      if(m.winner !== 0) {
+      if (m.winner !== 0) {
         stats[m.a1].matches++;
         stats[m.a2].matches++;
-        if(m.winner === 1) stats[m.a1].wins++;
-        else if(m.winner === 2) stats[m.a2].wins++;
+        if (m.winner === 1) stats[m.a1].wins++;
+        else if (m.winner === 2) stats[m.a2].wins++;
       }
     });
 
@@ -183,7 +229,7 @@
       winrate: stats[i].matches ? stats[i].wins / stats[i].matches : 0
     }));
 
-    results.sort((a,b) => b.winrate - a.winrate || b.wins - a.wins || a.title.localeCompare(b.title));
+    results.sort((a, b) => b.winrate - a.winrate || b.wins - a.wins || a.title.localeCompare(b.title));
 
     const classementDiv = document.querySelector("#classement");
     classementDiv.innerHTML = "<h2>Classement final</h2>";
@@ -203,14 +249,14 @@
     results.forEach((r, i) => {
       const tr = document.createElement("tr");
       tr.innerHTML = `
-        <td>${i+1}</td>
+        <td>${i + 1}</td>
         <td style="text-align:left;">
           <img src="${r.image}" alt="${r.title}" style="width:40px; vertical-align:middle; border-radius:5px; margin-right:8px;" />
           ${r.title}
         </td>
         <td>${r.wins}</td>
         <td>${r.matches}</td>
-        <td>${(r.winrate*100).toFixed(1)}%</td>
+        <td>${(r.winrate * 100).toFixed(1)}%</td>
       `;
       tbody.appendChild(tr);
     });
@@ -225,4 +271,3 @@
 
 </body>
 </html>
-
