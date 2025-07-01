@@ -61,7 +61,7 @@
   }
   .opening iframe {
     width: 100%;
-    height: 170px;
+    height: 300px; /* Agrandi ici */
     border-radius: 10px;
     pointer-events: auto;
   }
@@ -86,7 +86,6 @@
     background-color: #666;
   }
 
-  /* Style classement 2 colonnes avec affiches plus petites */
   #classement {
     margin-top: 30px;
     max-width: 700px;
@@ -112,6 +111,12 @@
     margin-bottom: 10px;
     user-select: none;
     pointer-events: none;
+  }
+  .classement-item iframe {
+    width: 100%;
+    height: 150px;
+    border-radius: 10px;
+    margin-top: 10px;
   }
   .classement-item .rank {
     font-size: 18px;
@@ -147,7 +152,7 @@
   const TOTAL_ITEMS = 16;
   const MAX_DUELS_PER_ITEM = 5;
 
-  let mode = 'anime'; // 'anime' ou 'opening'
+  let mode = 'anime';
   let data = [];
   let items = [];
   let matches = [];
@@ -218,7 +223,6 @@
 
   function generateMatches() {
     matches = [];
-    // toutes les paires possibles
     const possiblePairs = [];
     for(let i = 0; i < TOTAL_ITEMS; i++){
       for(let j = i + 1; j < TOTAL_ITEMS; j++){
@@ -241,7 +245,6 @@
     duelContainer.innerHTML = '';
     buttonsDiv.innerHTML = '';
 
-    // On crée 2 conteneurs pour afficher les 2 items
     const div1 = document.createElement('div');
     const div2 = document.createElement('div');
 
@@ -255,7 +258,6 @@
       div1.className = 'opening';
       div2.className = 'opening';
 
-      // iframe YouTube intégré, on prendra la première URL youtubeUrls[0] (ou aléatoire)
       div1.innerHTML = `<iframe src="" frameborder="0" allowfullscreen></iframe><h3></h3>`;
       div2.innerHTML = `<iframe src="" frameborder="0" allowfullscreen></iframe><h3></h3>`;
     }
@@ -263,7 +265,6 @@
     duelContainer.appendChild(div1);
     duelContainer.appendChild(div2);
 
-    // boutons choix avec titre
     const btn1 = document.createElement('button');
     const btn2 = document.createElement('button');
     btn1.id = 'choose1';
@@ -275,18 +276,13 @@
     buttonsDiv.appendChild(btn1);
     buttonsDiv.appendChild(btn2);
 
-    // clic sur boutons ou sur les divs
     btn1.onclick = () => recordWin(1);
     btn2.onclick = () => recordWin(2);
-
     div1.onclick = () => recordWin(1);
     div2.onclick = () => recordWin(2);
   }
 
   function getYouTubeEmbedUrl(youtubeUrl) {
-    // Convertir URL youtube normale en embed
-    // Ex: https://www.youtube.com/watch?v=L1FdEBTJXus
-    // embed: https://www.youtube.com/embed/L1FdEBTJXus
     let videoId = null;
     try {
       const urlObj = new URL(youtubeUrl);
@@ -295,9 +291,7 @@
       } else if(urlObj.hostname.includes('youtu.be')){
         videoId = urlObj.pathname.slice(1);
       }
-    } catch {
-      // url non valide
-    }
+    } catch {}
     if(videoId) return `https://www.youtube.com/embed/${videoId}?rel=0&autoplay=0`;
     return null;
   }
@@ -314,7 +308,6 @@
     const divs = duelContainer.children;
 
     if(mode === 'anime'){
-      // anime mode: on affiche image + titre
       divs[0].querySelector('img').src = items[i1].image;
       divs[0].querySelector('img').alt = items[i1].title;
       divs[0].querySelector('h3').textContent = items[i1].title;
@@ -323,16 +316,11 @@
       divs[1].querySelector('img').alt = items[i2].title;
       divs[1].querySelector('h3').textContent = items[i2].title;
     } else {
-      // openings mode: on affiche iframe youtube + titre
-      const urls1 = items[i1].youtubeUrls;
-      const urls2 = items[i2].youtubeUrls;
-      const url1 = getYouTubeEmbedUrl(urls1 ? urls1[0] : '') || '';
-      const url2 = getYouTubeEmbedUrl(urls2 ? urls2[0] : '') || '';
+      const url1 = getYouTubeEmbedUrl(items[i1].youtubeUrls?.[0] || '') || '';
+      const url2 = getYouTubeEmbedUrl(items[i2].youtubeUrls?.[0] || '') || '';
 
-      const iframe1 = divs[0].querySelector('iframe');
-      const iframe2 = divs[1].querySelector('iframe');
-      iframe1.src = url1;
-      iframe2.src = url2;
+      divs[0].querySelector('iframe').src = url1;
+      divs[1].querySelector('iframe').src = url2;
 
       divs[0].querySelector('h3').textContent = items[i1].title;
       divs[1].querySelector('h3').textContent = items[i2].title;
@@ -358,11 +346,11 @@
       else if(m.winner === 2) stats[m.i2]++;
     });
 
-    // Trier par victoires décroissantes puis alphabétique
     const results = items.map((item, i) => ({
       title: item.title,
-      image: item.image || '', // pas d'image pour openings mais on laisse vide
-      wins: stats[i]
+      image: item.image || '',
+      wins: stats[i],
+      youtubeUrl: (item.youtubeUrls && item.youtubeUrls[0]) || null
     }));
 
     results.sort((a,b) => b.wins - a.wins || a.title.localeCompare(b.title));
@@ -372,18 +360,26 @@
     results.forEach((r,i) => {
       const itemDiv = document.createElement('div');
       itemDiv.className = 'classement-item';
+
+      let video = '';
+      if(mode === 'opening' && r.youtubeUrl){
+        const embed = getYouTubeEmbedUrl(r.youtubeUrl);
+        if(embed){
+          video = `<iframe src="${embed}" frameborder="0" allowfullscreen></iframe>`;
+        }
+      }
+
       itemDiv.innerHTML = `
         <div class="rank">#${i+1}</div>
         ${r.image ? `<img src="${r.image}" alt="${r.title}"/>` : ''}
         <div class="title">${r.title}</div>
+        ${video}
       `;
       classementDiv.appendChild(itemDiv);
     });
   }
 
-  // Démarrage initial
   loadDataAndStart();
-
 })();
 </script>
 
