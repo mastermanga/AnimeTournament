@@ -2,37 +2,278 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <title>Tournoi Openings / Animes</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Tournoi Anime</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #fff;
+      color: #000;
+      transition: background 0.3s, color 0.3s;
+    }
+    body.dark {
+      background: #121212;
+      color: #f0f0f0;
+    }
+    nav {
+      display: flex;
+      gap: 10px;
+      padding: 10px;
+    }
+    nav button {
+      padding: 10px 20px;
+      cursor: pointer;
+      background: #eee;
+      border: none;
+      border-radius: 5px;
+    }
+    nav button.active {
+      background: #2196f3;
+      color: white;
+    }
+    .card {
+      flex: 1;
+      text-align: center;
+      padding: 10px;
+    }
+    .card img {
+      max-width: 100%;
+      height: auto;
+      border: 2px solid #ccc;
+      border-radius: 8px;
+    }
+    #match {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      padding: 20px;
+    }
+    #vote-buttons {
+      text-align: center;
+      margin: 20px 0;
+    }
+    #vote-buttons button {
+      padding: 10px 20px;
+      margin: 0 10px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    #results {
+      padding: 20px;
+    }
+    #toggle-theme {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      padding: 5px 12px;
+      font-size: 18px;
+      cursor: pointer;
+    }
+    body.dark nav button.active,
+    body.dark #vote-buttons button {
+      background: #90caf9;
+      color: #000;
+    }
+    body.dark nav button:not(.active),
+    body.dark #vote-buttons button[disabled] {
+      background: #333;
+      color: #ccc;
+    }
+    body.dark .card img {
+      border-color: #999;
+    }
+  </style>
 </head>
-
 <body>
-  <header>
-    <h1>Tournoi 1 v 1</h1>
-    <nav>
-      <!-- Menu : choix du mode -->
-      <button id="btn-openings" class="active">Openings</button>
-      <button id="btn-animes">Animes</button>
-    </nav>
-  </header>
+  <button id="toggle-theme">🌙</button>
+  <nav>
+    <button id="mode-openings" class="active">Openings</button>
+    <button id="mode-animes">Animes</button>
+  </nav>
+  <div id="match">
+    <div id="left" class="card"></div>
+    <div id="right" class="card"></div>
+  </div>
+  <div id="vote-buttons">
+    <button id="vote-left">⬅️</button>
+    <button id="vote-right">➡️</button>
+  </div>
+  <div id="results"></div>
 
-  <main>
-    <!-- Zone d’affichage des vidéos / images -->
-    <div id="match-container">
-      <div class="card" id="slot1"></div>
-      <div class="card" id="slot2"></div>
-    </div>
+  <script>
+    const MODE = { OPENINGS: 'openings', ANIMES: 'animes' };
+    let currentMode = MODE.OPENINGS;
+    let data = [];
+    let scores = {};
+    let currentPair = [];
+    let animeMatches = [];
+    let currentAnimeMatchIndex = 0;
 
-    <!-- Boutons de vote -->
-    <div id="vote-buttons">
-      <button id="vote1" disabled>Vote 1</button>
-      <button id="vote2" disabled>Vote 2</button>
-    </div>
+    function shuffleArray(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
 
-    <!-- Résultats finaux -->
-    <section id="results"></section>
-  </main>
+    function randomArrayItem(arr) {
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
 
-  <script src="script.js"></script>
+    function getRandomPair() {
+      let a = randomArrayItem(data);
+      let b;
+      do {
+        b = randomArrayItem(data);
+      } while (a === b);
+      return [a, b];
+    }
+
+    function generateAnimeMatches(animes, matchesPerAnime = 5) {
+      const pairs = [];
+      const opponentsMap = {};
+      for (let anime of animes) {
+        opponentsMap[anime.title] = new Set();
+      }
+      for (let anime of animes) {
+        while (opponentsMap[anime.title].size < matchesPerAnime) {
+          const opponent = randomArrayItem(animes);
+          if (
+            opponent.title !== anime.title &&
+            !opponentsMap[anime.title].has(opponent.title) &&
+            (opponentsMap[opponent.title]?.size || 0) < matchesPerAnime
+          ) {
+            opponentsMap[anime.title].add(opponent.title);
+            opponentsMap[opponent.title].add(anime.title);
+            pairs.push([anime, opponent]);
+          }
+        }
+      }
+      return shuffleArray(pairs);
+    }
+
+    function renderCurrentPair() {
+      const [left, right] = currentPair;
+      document.getElementById("left").innerHTML = currentMode === MODE.OPENINGS ?
+        `<h2>${left.title}</h2><iframe width="300" height="169" src="${left.youtubeUrls[0].replace("watch?v=", "embed/")}" frameborder="0" allowfullscreen></iframe>` :
+        `<h2>${left.title}</h2><img src="${left.image}" alt="${left.title}">`;
+      document.getElementById("right").innerHTML = currentMode === MODE.OPENINGS ?
+        `<h2>${right.title}</h2><iframe width="300" height="169" src="${right.youtubeUrls[0].replace("watch?v=", "embed/")}" frameborder="0" allowfullscreen></iframe>` :
+        `<h2>${right.title}</h2><img src="${right.image}" alt="${right.title}">`;
+    }
+
+    function nextMatch() {
+      if (currentMode === MODE.OPENINGS) {
+        currentPair = getRandomPair();
+        renderCurrentPair();
+      } else {
+        if (currentAnimeMatchIndex >= animeMatches.length) {
+          showResults();
+          return;
+        }
+        currentPair = animeMatches[currentAnimeMatchIndex];
+        currentAnimeMatchIndex++;
+        renderCurrentPair();
+      }
+    }
+
+    function vote(winnerIndex) {
+      const [left, right] = currentPair;
+      const winner = winnerIndex === 0 ? left : right;
+      const loser = winnerIndex === 0 ? right : left;
+
+      scores[winner.title].wins++;
+      scores[winner.title].games++;
+      scores[loser.title].games++;
+      nextMatch();
+    }
+
+    function showResults() {
+      const sorted = Object.entries(scores).map(([title, { wins, games }]) => ({
+        title,
+        winrate: (wins / games) || 0,
+        wins,
+        games
+      })).sort((a, b) => b.winrate - a.winrate);
+
+      document.getElementById("match").style.display = "none";
+      document.getElementById("vote-buttons").style.display = "none";
+      document.getElementById("results").innerHTML =
+        `<h2>Classement</h2><ol>` +
+        sorted.map(s => `<li>${s.title} - ${s.wins}/${s.games} (${(s.winrate * 100).toFixed(1)}%)</li>`).join('') +
+        `</ol>`;
+    }
+
+    async function switchMode(newMode) {
+      document.getElementById("match").style.display = "flex";
+      document.getElementById("vote-buttons").style.display = "block";
+      document.getElementById("results").innerHTML = "";
+      document.getElementById("mode-openings").classList.toggle("active", newMode === MODE.OPENINGS);
+      document.getElementById("mode-animes").classList.toggle("active", newMode === MODE.ANIMES);
+
+      currentMode = newMode;
+
+      const fullData = newMode === MODE.OPENINGS ? openingsData : animesData;
+
+      if (newMode === MODE.ANIMES) {
+        data = shuffleArray([...fullData]).slice(0, 16);
+        scores = {};
+        data.forEach(item => scores[item.title] = { wins: 0, games: 0 });
+        animeMatches = generateAnimeMatches(data, 5);
+        currentAnimeMatchIndex = 0;
+        nextMatch();
+      } else {
+        data = fullData;
+        scores = {};
+        data.forEach(item => scores[item.title] = { wins: 0, games: 0 });
+        nextMatch();
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      document.getElementById("vote-left").onclick = () => vote(0);
+      document.getElementById("vote-right").onclick = () => vote(1);
+      document.getElementById("mode-openings").onclick = () => switchMode(MODE.OPENINGS);
+      document.getElementById("mode-animes").onclick = () => switchMode(MODE.ANIMES);
+      document.getElementById("toggle-theme").onclick = () => {
+        document.body.classList.toggle("dark");
+      };
+      switchMode(MODE.OPENINGS);
+    });
+
+    // JSON embarqués directement ici
+    const openingsData = [
+      {
+        "title": "My Hero Academia",
+        "youtubeUrls": ["https://www.youtube.com/watch?v=L1FdEBTJXus"]
+      },
+      {
+        "title": "Hunter X Hunter",
+        "youtubeUrls": ["https://www.youtube.com/watch?v=faqmNf_fZlE"]
+      }
+    ];
+
+    const animesData = [
+      {
+        "title": "Fullmetal Alchemist: Brotherhood",
+        "image": "https://cdn.myanimelist.net/images/anime/1208/94745l.jpg"
+      },
+      {
+        "title": "Attack on Titan",
+        "image": "https://cdn.myanimelist.net/images/anime/10/47347.jpg"
+      },
+      {
+        "title": "Death Note",
+        "image": "https://cdn.myanimelist.net/images/anime/9/9453.jpg"
+      },
+      {
+        "title": "One Punch Man",
+        "image": "https://cdn.myanimelist.net/images/anime/12/76049.jpg"
+      }
+    ];
+  </script>
 </body>
 </html>
