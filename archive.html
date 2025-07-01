@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Anime 1v1 Championship</title>
+<style>
+  body {
+    background-color: #121212;
+    color: #eee;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0; padding: 20px;
+    display: flex; flex-direction: column; align-items: center;
+  }
+  h1 {
+    margin-bottom: 10px;
+  }
+  #duel-container {
+    display: flex; gap: 40px; margin: 20px 0;
+    max-width: 700px;
+  }
+  .anime {
+    background: #222;
+    padding: 10px;
+    border-radius: 10px;
+    width: 300px;
+    text-align: center;
+    box-shadow: 0 0 10px #333;
+    cursor: pointer;
+    user-select: none;
+    transition: transform 0.2s;
+  }
+  .anime:hover {
+    transform: scale(1.05);
+  }
+  .anime img {
+    width: 100%;
+    height: auto;
+    border-radius: 10px;
+  }
+  #buttons {
+    margin-top: 10px;
+    display: flex;
+    gap: 20px;
+    max-width: 700px;
+  }
+  #buttons button {
+    background-color: #444;
+    color: #eee;
+    border: none;
+    padding: 12px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: background-color 0.3s;
+    flex: 1;
+  }
+  #buttons button:hover {
+    background-color: #666;
+  }
+
+  /* Style classement 2 colonnes avec affiches plus petites */
+  #classement {
+    margin-top: 30px;
+    max-width: 700px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 25px;
+  }
+  .classement-item {
+    background-color: #222;
+    padding: 15px;
+    border-radius: 12px;
+    box-shadow: 0 0 15px #333;
+    text-align: center;
+    color: #eee;
+  }
+  .classement-item img {
+    width: 100%;
+    max-width: 160px; /* taille réduite */
+    border-radius: 12px;
+    margin-bottom: 10px;
+    user-select: none;
+    pointer-events: none;
+  }
+  .classement-item .rank {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 6px;
+  }
+  .classement-item .title {
+    font-size: 16px;
+  }
+</style>
+</head>
+<body>
+
+<h1>Anime 1v1 Championship</h1>
+
+<div id="duel-container">
+  <div class="anime" id="anime1" tabindex="0" role="button" aria-pressed="false">
+    <img src="" alt="Anime 1" />
+    <h3></h3>
+  </div>
+  <div class="anime" id="anime2" tabindex="0" role="button" aria-pressed="false">
+    <img src="" alt="Anime 2" />
+    <h3></h3>
+  </div>
+</div>
+
+<div id="buttons">
+  <button id="choose1" aria-label="Choisir anime 1"></button>
+  <button id="choose2" aria-label="Choisir anime 2"></button>
+</div>
+
+<div id="classement"></div>
+
+<script>
+(async () => {
+  const response = await fetch('animes.json');
+  if (!response.ok) {
+    alert("Erreur lors du chargement du fichier animes.json");
+    return;
+  }
+  const rawAnimes = await response.json();
+
+  const TOTAL_ANIMES = 16;
+  const MAX_DUELS_PER_ANIME = 5;
+
+  function shuffle(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+  }
+
+  // Sélection aléatoire de 16 animés
+  let animes = [...rawAnimes];
+  shuffle(animes);
+  animes = animes.slice(0, TOTAL_ANIMES).map(a => ({
+    title: a.title,
+    image: a.image
+  }));
+
+  // Générer toutes les paires possibles (sans répétition)
+  const possiblePairs = [];
+  for (let i = 0; i < TOTAL_ANIMES; i++) {
+    for (let j = i + 1; j < TOTAL_ANIMES; j++) {
+      possiblePairs.push({ a1: i, a2: j, winner: 0 });
+    }
+  }
+  shuffle(possiblePairs);
+
+  const duelCounts = new Array(TOTAL_ANIMES).fill(0);
+  const matches = [];
+
+  // Choisir les matchs en limitant à 5 duels max par anime
+  for (const pair of possiblePairs) {
+    if (duelCounts[pair.a1] < MAX_DUELS_PER_ANIME && duelCounts[pair.a2] < MAX_DUELS_PER_ANIME) {
+      matches.push(pair);
+      duelCounts[pair.a1]++;
+      duelCounts[pair.a2]++;
+    }
+    if (duelCounts.every(c => c >= MAX_DUELS_PER_ANIME)) break;
+  }
+
+  let currentMatchIndex = 0;
+
+  function showMatch() {
+    if (currentMatchIndex >= matches.length) {
+      showClassement();
+      return;
+    }
+    const match = matches[currentMatchIndex];
+    const anime1 = animes[match.a1];
+    const anime2 = animes[match.a2];
+
+    const anime1Div = document.querySelector("#anime1");
+    const anime2Div = document.querySelector("#anime2");
+
+    anime1Div.querySelector("img").src = anime1.image;
+    anime1Div.querySelector("img").alt = anime1.title;
+    anime1Div.querySelector("h3").textContent = anime1.title;
+
+    anime2Div.querySelector("img").src = anime2.image;
+    anime2Div.querySelector("img").alt = anime2.title;
+    anime2Div.querySelector("h3").textContent = anime2.title;
+
+    document.querySelector("#choose1").textContent = anime1.title;
+    document.querySelector("#choose2").textContent = anime2.title;
+  }
+
+  function recordWin(winnerIndex) {
+    matches[currentMatchIndex].winner = winnerIndex;
+    currentMatchIndex++;
+    showMatch();
+  }
+
+  document.querySelector("#choose1").onclick = () => recordWin(1);
+  document.querySelector("#choose2").onclick = () => recordWin(2);
+
+  document.querySelector("#anime1").onclick = () => recordWin(1);
+  document.querySelector("#anime2").onclick = () => recordWin(2);
+
+  function showClassement() {
+    document.querySelector("#buttons").style.display = "none";
+    document.querySelector("#duel-container").style.display = "none";
+
+    // Compte des victoires par anime
+    const stats = new Array(TOTAL_ANIMES).fill(0);
+    matches.forEach(m => {
+      if (m.winner === 1) stats[m.a1]++;
+      else if (m.winner === 2) stats[m.a2]++;
+    });
+
+    // Classement trié par victoires décroissantes
+    const results = animes.map((a, i) => ({
+      title: a.title,
+      image: a.image,
+      wins: stats[i]
+    }));
+
+    results.sort((a, b) => b.wins - a.wins || a.title.localeCompare(b.title));
+
+    const classementDiv = document.querySelector("#classement");
+    classementDiv.innerHTML = "<h2>Classement final</h2>";
+
+    results.forEach((r, i) => {
+      const item = document.createElement("div");
+      item.className = "classement-item";
+      item.innerHTML = `
+        <div class="rank">#${i + 1}</div>
+        <img src="${r.image}" alt="${r.title}" />
+        <div class="title">${r.title}</div>
+      `;
+      classementDiv.appendChild(item);
+    });
+  }
+
+  showMatch();
+
+})();
+</script>
+
+</body>
+</html>
