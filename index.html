@@ -90,33 +90,14 @@
 
 <script>
 (async () => {
-  // Simule un fetch local en JS : ici tu mets ton vrai fetch si tu veux
-  const rawAnimes = [
-    // Colle ici l'intégralité de ton JSON (ou charge via fetch)
-    {
-      "title": "Fullmetal Alchemist: Brotherhood",
-      "image": "https://cdn.myanimelist.net/images/anime/1208/94745l.jpg",
-      "season": "spring 2009",
-      "studio": "Bones",
-      "genres": ["Action", "Adventure", "Drama", "Fantasy"],
-      "themes": ["Military"],
-      "score": 9.1,
-      "characters": [ /* ... */ ]
-    },
-    {
-      "title": "Attack on Titan",
-      "image": "https://cdn.myanimelist.net/images/anime/10/47347l.jpg",
-      "season": "spring 2013",
-      "studio": "Wit Studio",
-      "genres": ["Action", "Award Winning", "Drama", "Suspense"],
-      "themes": ["Gore", "Military", "Survival"],
-      "score": 8.56,
-      "characters": [ /* ... */ ]
-    },
-    // ... ajoute ici tout ton JSON complet ...
-  ];
+  // Charge le JSON animes.json (doit être dans le même dossier)
+  const response = await fetch('./animes.json');
+  if(!response.ok) {
+    alert("Erreur lors du chargement du fichier animes.json");
+    return;
+  }
+  const rawAnimes = await response.json();
 
-  // --- Fonction pour choisir n animés aléatoires sans doublons ---
   function chooseRandom(animes, n) {
     const copy = [...animes];
     const chosen = [];
@@ -130,15 +111,11 @@
   const TOTAL_ANIMES = 16;
   const duelCountPerAnime = 5;
 
-  // On choisit 16 animés aléatoires
-  const animes = chooseRandom(rawAnimes, TOTAL_ANIMES);
+  const animes = chooseRandom(rawAnimes, TOTAL_ANIMES).map(a => ({
+    title: a.title,
+    image: a.image
+  }));
 
-  // On garde seulement title et image
-  for(let i = 0; i < animes.length; i++) {
-    animes[i] = { title: animes[i].title, image: animes[i].image };
-  }
-
-  // Matches générés : chaque animé joue 5 duels contre des adversaires différents
   const matches = [];
   for(let i=0; i < animes.length; i++) {
     const opponents = new Set();
@@ -184,11 +161,9 @@
   document.querySelector("#choose2").onclick = () => recordWin(2);
 
   function showClassement() {
-    // Désactiver les boutons
     document.querySelector("#buttons").style.display = "none";
     document.querySelector("#duel-container").style.display = "none";
 
-    // Calculer les stats (victoires, duels joués)
     const stats = animes.map(() => ({ wins: 0, matches: 0 }));
 
     matches.forEach(m => {
@@ -200,7 +175,6 @@
       }
     });
 
-    // Ajouter winrate
     const results = animes.map((a, i) => ({
       title: a.title,
       image: a.image,
@@ -209,10 +183,8 @@
       winrate: stats[i].matches ? stats[i].wins / stats[i].matches : 0
     }));
 
-    // Trier par winrate décroissant, puis victoires, puis titre
     results.sort((a,b) => b.winrate - a.winrate || b.wins - a.wins || a.title.localeCompare(b.title));
 
-    // Affichage
     const classementDiv = document.querySelector("#classement");
     classementDiv.innerHTML = "<h2>Classement final</h2>";
 
@@ -246,7 +218,6 @@
     classementDiv.appendChild(table);
   }
 
-  // Démarrage
   showMatch();
 
 })();
