@@ -42,6 +42,7 @@
     margin-top: 10px;
     display: flex;
     gap: 20px;
+    max-width: 700px;
   }
   #buttons button {
     background-color: #444;
@@ -57,33 +58,38 @@
   #buttons button:hover {
     background-color: #666;
   }
+
+  /* Nouveau style classement en grille 2 colonnes */
   #classement {
     margin-top: 30px;
-    width: 100%;
     max-width: 700px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 25px;
   }
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 10px;
-  }
-  th, td {
-    border: 1px solid #444;
-    padding: 8px;
+  .classement-item {
+    background-color: #222;
+    padding: 15px;
+    border-radius: 12px;
+    box-shadow: 0 0 15px #333;
     text-align: center;
+    color: #eee;
   }
-  th {
-    background-color: #333;
+  .classement-item img {
+    width: 100%;
+    max-width: 220px;
+    border-radius: 12px;
+    margin-bottom: 10px;
+    user-select: none;
+    pointer-events: none;
   }
-  td.anime-cell {
-    text-align: left;
-    display: flex;
-    align-items: center;
-    gap: 10px;
+  .classement-item .rank {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 6px;
   }
-  td.anime-cell img {
-    width: 40px;
-    border-radius: 5px;
+  .classement-item .title {
+    font-size: 16px;
   }
 </style>
 </head>
@@ -118,7 +124,6 @@
   }
   const rawAnimes = await response.json();
 
-  // Choisir 16 animés random
   const TOTAL_ANIMES = 16;
   const MAX_DUELS_PER_ANIME = 5;
 
@@ -130,7 +135,7 @@
     return array;
   }
 
-  // Prendre 16 animés random
+  // Sélection aléatoire de 16 animés
   let animes = [...rawAnimes];
   shuffle(animes);
   animes = animes.slice(0, TOTAL_ANIMES).map(a => ({
@@ -138,10 +143,7 @@
     image: a.image
   }));
 
-  // Générer les matchs avec contrainte max 5 duels par anime
-  // Algorithme : on génère toutes les paires possibles, on shuffle, et on choisit tant que
-  // ni l'un ni l'autre anime dépasse les 5 matchs
-
+  // Générer toutes les paires possibles (sans répétition)
   const possiblePairs = [];
   for (let i = 0; i < TOTAL_ANIMES; i++) {
     for (let j = i + 1; j < TOTAL_ANIMES; j++) {
@@ -153,13 +155,13 @@
   const duelCounts = new Array(TOTAL_ANIMES).fill(0);
   const matches = [];
 
+  // Choisir les matchs en limitant à 5 duels max par anime
   for (const pair of possiblePairs) {
     if (duelCounts[pair.a1] < MAX_DUELS_PER_ANIME && duelCounts[pair.a2] < MAX_DUELS_PER_ANIME) {
       matches.push(pair);
       duelCounts[pair.a1]++;
       duelCounts[pair.a2]++;
     }
-    // Arrêt quand tous ont atteint le max (optionnel)
     if (duelCounts.every(c => c >= MAX_DUELS_PER_ANIME)) break;
   }
 
@@ -205,14 +207,14 @@
     document.querySelector("#buttons").style.display = "none";
     document.querySelector("#duel-container").style.display = "none";
 
-    // Calcul des victoires par anime
+    // Compte des victoires par anime
     const stats = new Array(TOTAL_ANIMES).fill(0);
     matches.forEach(m => {
       if (m.winner === 1) stats[m.a1]++;
       else if (m.winner === 2) stats[m.a2]++;
     });
 
-    // Création tableau classement trié par victoires décroissantes
+    // Classement trié par victoires décroissantes
     const results = animes.map((a, i) => ({
       title: a.title,
       image: a.image,
@@ -224,28 +226,16 @@
     const classementDiv = document.querySelector("#classement");
     classementDiv.innerHTML = "<h2>Classement final</h2>";
 
-    const table = document.createElement("table");
-    const thead = document.createElement("thead");
-    thead.innerHTML = `<tr>
-      <th>#</th>
-      <th>Anime</th>
-    </tr>`;
-    table.appendChild(thead);
-
-    const tbody = document.createElement("tbody");
     results.forEach((r, i) => {
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${i + 1}</td>
-        <td class="anime-cell">
-          <img src="${r.image}" alt="${r.title}" />
-          ${r.title}
-        </td>
+      const item = document.createElement("div");
+      item.className = "classement-item";
+      item.innerHTML = `
+        <div class="rank">#${i + 1}</div>
+        <img src="${r.image}" alt="${r.title}" />
+        <div class="title">${r.title}</div>
       `;
-      tbody.appendChild(tr);
+      classementDiv.appendChild(item);
     });
-    table.appendChild(tbody);
-    classementDiv.appendChild(table);
   }
 
   showMatch();
@@ -255,4 +245,3 @@
 
 </body>
 </html>
-
