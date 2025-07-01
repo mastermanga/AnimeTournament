@@ -91,7 +91,7 @@
 <script>
 (async () => {
   // Charge le JSON animes.json (doit être dans le même dossier)
-  const response = await fetch('./animes.json');
+  const response = await fetch('animes.json');
   if(!response.ok) {
     alert("Erreur lors du chargement du fichier animes.json");
     return;
