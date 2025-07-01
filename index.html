@@ -1,279 +1,257 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Tournoi Anime</title>
-  <style>
-    body {
-      font-family: sans-serif;
-      margin: 0;
-      padding: 0;
-      background: #fff;
-      color: #000;
-      transition: background 0.3s, color 0.3s;
-    }
-    body.dark {
-      background: #121212;
-      color: #f0f0f0;
-    }
-    nav {
-      display: flex;
-      gap: 10px;
-      padding: 10px;
-    }
-    nav button {
-      padding: 10px 20px;
-      cursor: pointer;
-      background: #eee;
-      border: none;
-      border-radius: 5px;
-    }
-    nav button.active {
-      background: #2196f3;
-      color: white;
-    }
-    .card {
-      flex: 1;
-      text-align: center;
-      padding: 10px;
-    }
-    .card img {
-      max-width: 100%;
-      height: auto;
-      border: 2px solid #ccc;
-      border-radius: 8px;
-    }
-    #match {
-      display: flex;
-      justify-content: center;
-      gap: 20px;
-      padding: 20px;
-    }
-    #vote-buttons {
-      text-align: center;
-      margin: 20px 0;
-    }
-    #vote-buttons button {
-      padding: 10px 20px;
-      margin: 0 10px;
-      font-size: 16px;
-      cursor: pointer;
-    }
-    #results {
-      padding: 20px;
-    }
-    #toggle-theme {
-      position: absolute;
-      top: 20px;
-      right: 20px;
-      padding: 5px 12px;
-      font-size: 18px;
-      cursor: pointer;
-    }
-    body.dark nav button.active,
-    body.dark #vote-buttons button {
-      background: #90caf9;
-      color: #000;
-    }
-    body.dark nav button:not(.active),
-    body.dark #vote-buttons button[disabled] {
-      background: #333;
-      color: #ccc;
-    }
-    body.dark .card img {
-      border-color: #999;
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Anime 1v1 Championship</title>
+<style>
+  body {
+    background-color: #121212;
+    color: #eee;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0; padding: 20px;
+    display: flex; flex-direction: column; align-items: center;
+  }
+  h1 {
+    margin-bottom: 10px;
+  }
+  #duel-container {
+    display: flex; gap: 40px; margin: 20px 0;
+    max-width: 700px;
+  }
+  .anime {
+    background: #222;
+    padding: 10px;
+    border-radius: 10px;
+    width: 300px;
+    text-align: center;
+    box-shadow: 0 0 10px #333;
+  }
+  .anime img {
+    width: 100%;
+    height: auto;
+    border-radius: 10px;
+  }
+  #buttons button {
+    background-color: #444;
+    color: #eee;
+    border: none;
+    padding: 12px 20px;
+    margin: 0 10px;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: background-color 0.3s;
+  }
+  #buttons button:hover {
+    background-color: #666;
+  }
+  #classement {
+    margin-top: 30px;
+    width: 100%;
+    max-width: 700px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+  }
+  th, td {
+    border: 1px solid #444;
+    padding: 8px;
+    text-align: center;
+  }
+  th {
+    background-color: #333;
+  }
+</style>
 </head>
 <body>
-  <button id="toggle-theme">🌙</button>
-  <nav>
-    <button id="mode-openings" class="active">Openings</button>
-    <button id="mode-animes">Animes</button>
-  </nav>
-  <div id="match">
-    <div id="left" class="card"></div>
-    <div id="right" class="card"></div>
+
+<h1>Anime 1v1 Championship</h1>
+
+<div id="duel-container">
+  <div class="anime" id="anime1">
+    <img src="" alt="Anime 1" />
+    <h3></h3>
   </div>
-  <div id="vote-buttons">
-    <button id="vote-left">⬅️</button>
-    <button id="vote-right">➡️</button>
+  <div class="anime" id="anime2">
+    <img src="" alt="Anime 2" />
+    <h3></h3>
   </div>
-  <div id="results"></div>
+</div>
 
-  <script>
-    const MODE = { OPENINGS: 'openings', ANIMES: 'animes' };
-    let currentMode = MODE.OPENINGS;
-    let data = [];
-    let scores = {};
-    let currentPair = [];
-    let animeMatches = [];
-    let currentAnimeMatchIndex = 0;
+<div id="buttons">
+  <button id="choose1">Gagner</button>
+  <button id="choose2">Gagner</button>
+</div>
 
-    function shuffleArray(array) {
-      for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
-      }
-      return array;
+<div id="classement"></div>
+
+<script>
+(async () => {
+  // Simule un fetch local en JS : ici tu mets ton vrai fetch si tu veux
+  const rawAnimes = [
+    // Colle ici l'intégralité de ton JSON (ou charge via fetch)
+    {
+      "title": "Fullmetal Alchemist: Brotherhood",
+      "image": "https://cdn.myanimelist.net/images/anime/1208/94745l.jpg",
+      "season": "spring 2009",
+      "studio": "Bones",
+      "genres": ["Action", "Adventure", "Drama", "Fantasy"],
+      "themes": ["Military"],
+      "score": 9.1,
+      "characters": [ /* ... */ ]
+    },
+    {
+      "title": "Attack on Titan",
+      "image": "https://cdn.myanimelist.net/images/anime/10/47347l.jpg",
+      "season": "spring 2013",
+      "studio": "Wit Studio",
+      "genres": ["Action", "Award Winning", "Drama", "Suspense"],
+      "themes": ["Gore", "Military", "Survival"],
+      "score": 8.56,
+      "characters": [ /* ... */ ]
+    },
+    // ... ajoute ici tout ton JSON complet ...
+  ];
+
+  // --- Fonction pour choisir n animés aléatoires sans doublons ---
+  function chooseRandom(animes, n) {
+    const copy = [...animes];
+    const chosen = [];
+    for(let i = 0; i < n && copy.length > 0; i++) {
+      const idx = Math.floor(Math.random() * copy.length);
+      chosen.push(copy.splice(idx, 1)[0]);
     }
+    return chosen;
+  }
 
-    function randomArrayItem(arr) {
-      return arr[Math.floor(Math.random() * arr.length)];
-    }
+  const TOTAL_ANIMES = 16;
+  const duelCountPerAnime = 5;
 
-    function getRandomPair() {
-      let a = randomArrayItem(data);
-      let b;
-      do {
-        b = randomArrayItem(data);
-      } while (a === b);
-      return [a, b];
-    }
+  // On choisit 16 animés aléatoires
+  const animes = chooseRandom(rawAnimes, TOTAL_ANIMES);
 
-    function generateAnimeMatches(animes, matchesPerAnime = 5) {
-      const pairs = [];
-      const opponentsMap = {};
-      for (let anime of animes) {
-        opponentsMap[anime.title] = new Set();
-      }
-      for (let anime of animes) {
-        while (opponentsMap[anime.title].size < matchesPerAnime) {
-          const opponent = randomArrayItem(animes);
-          if (
-            opponent.title !== anime.title &&
-            !opponentsMap[anime.title].has(opponent.title) &&
-            (opponentsMap[opponent.title]?.size || 0) < matchesPerAnime
-          ) {
-            opponentsMap[anime.title].add(opponent.title);
-            opponentsMap[opponent.title].add(anime.title);
-            pairs.push([anime, opponent]);
-          }
-        }
-      }
-      return shuffleArray(pairs);
-    }
+  // On garde seulement title et image
+  for(let i = 0; i < animes.length; i++) {
+    animes[i] = { title: animes[i].title, image: animes[i].image };
+  }
 
-    function renderCurrentPair() {
-      const [left, right] = currentPair;
-      document.getElementById("left").innerHTML = currentMode === MODE.OPENINGS ?
-        `<h2>${left.title}</h2><iframe width="300" height="169" src="${left.youtubeUrls[0].replace("watch?v=", "embed/")}" frameborder="0" allowfullscreen></iframe>` :
-        `<h2>${left.title}</h2><img src="${left.image}" alt="${left.title}">`;
-      document.getElementById("right").innerHTML = currentMode === MODE.OPENINGS ?
-        `<h2>${right.title}</h2><iframe width="300" height="169" src="${right.youtubeUrls[0].replace("watch?v=", "embed/")}" frameborder="0" allowfullscreen></iframe>` :
-        `<h2>${right.title}</h2><img src="${right.image}" alt="${right.title}">`;
-    }
-
-    function nextMatch() {
-      if (currentMode === MODE.OPENINGS) {
-        currentPair = getRandomPair();
-        renderCurrentPair();
-      } else {
-        if (currentAnimeMatchIndex >= animeMatches.length) {
-          showResults();
-          return;
-        }
-        currentPair = animeMatches[currentAnimeMatchIndex];
-        currentAnimeMatchIndex++;
-        renderCurrentPair();
+  // Matches générés : chaque animé joue 5 duels contre des adversaires différents
+  const matches = [];
+  for(let i=0; i < animes.length; i++) {
+    const opponents = new Set();
+    while(opponents.size < duelCountPerAnime) {
+      const opp = Math.floor(Math.random() * animes.length);
+      if(opp !== i && !opponents.has(opp)) {
+        opponents.add(opp);
+        matches.push({a1: i, a2: opp, winner: 0});
       }
     }
+  }
 
-    function vote(winnerIndex) {
-      const [left, right] = currentPair;
-      const winner = winnerIndex === 0 ? left : right;
-      const loser = winnerIndex === 0 ? right : left;
+  let currentMatchIndex = 0;
 
-      scores[winner.title].wins++;
-      scores[winner.title].games++;
-      scores[loser.title].games++;
-      nextMatch();
+  function showMatch() {
+    if(currentMatchIndex >= matches.length) {
+      showClassement();
+      return;
     }
+    const match = matches[currentMatchIndex];
+    const anime1 = animes[match.a1];
+    const anime2 = animes[match.a2];
 
-    function showResults() {
-      const sorted = Object.entries(scores).map(([title, { wins, games }]) => ({
-        title,
-        winrate: (wins / games) || 0,
-        wins,
-        games
-      })).sort((a, b) => b.winrate - a.winrate);
+    const anime1Div = document.querySelector("#anime1");
+    const anime2Div = document.querySelector("#anime2");
 
-      document.getElementById("match").style.display = "none";
-      document.getElementById("vote-buttons").style.display = "none";
-      document.getElementById("results").innerHTML =
-        `<h2>Classement</h2><ol>` +
-        sorted.map(s => `<li>${s.title} - ${s.wins}/${s.games} (${(s.winrate * 100).toFixed(1)}%)</li>`).join('') +
-        `</ol>`;
-    }
+    anime1Div.querySelector("img").src = anime1.image;
+    anime1Div.querySelector("img").alt = anime1.title;
+    anime1Div.querySelector("h3").textContent = anime1.title;
 
-    async function switchMode(newMode) {
-      document.getElementById("match").style.display = "flex";
-      document.getElementById("vote-buttons").style.display = "block";
-      document.getElementById("results").innerHTML = "";
-      document.getElementById("mode-openings").classList.toggle("active", newMode === MODE.OPENINGS);
-      document.getElementById("mode-animes").classList.toggle("active", newMode === MODE.ANIMES);
+    anime2Div.querySelector("img").src = anime2.image;
+    anime2Div.querySelector("img").alt = anime2.title;
+    anime2Div.querySelector("h3").textContent = anime2.title;
+  }
 
-      currentMode = newMode;
+  function recordWin(winnerIndex) {
+    matches[currentMatchIndex].winner = winnerIndex;
+    currentMatchIndex++;
+    showMatch();
+  }
 
-      const fullData = newMode === MODE.OPENINGS ? openingsData : animesData;
+  document.querySelector("#choose1").onclick = () => recordWin(1);
+  document.querySelector("#choose2").onclick = () => recordWin(2);
 
-      if (newMode === MODE.ANIMES) {
-        data = shuffleArray([...fullData]).slice(0, 16);
-        scores = {};
-        data.forEach(item => scores[item.title] = { wins: 0, games: 0 });
-        animeMatches = generateAnimeMatches(data, 5);
-        currentAnimeMatchIndex = 0;
-        nextMatch();
-      } else {
-        data = fullData;
-        scores = {};
-        data.forEach(item => scores[item.title] = { wins: 0, games: 0 });
-        nextMatch();
+  function showClassement() {
+    // Désactiver les boutons
+    document.querySelector("#buttons").style.display = "none";
+    document.querySelector("#duel-container").style.display = "none";
+
+    // Calculer les stats (victoires, duels joués)
+    const stats = animes.map(() => ({ wins: 0, matches: 0 }));
+
+    matches.forEach(m => {
+      if(m.winner !== 0) {
+        stats[m.a1].matches++;
+        stats[m.a2].matches++;
+        if(m.winner === 1) stats[m.a1].wins++;
+        else if(m.winner === 2) stats[m.a2].wins++;
       }
-    }
-
-    document.addEventListener("DOMContentLoaded", () => {
-      document.getElementById("vote-left").onclick = () => vote(0);
-      document.getElementById("vote-right").onclick = () => vote(1);
-      document.getElementById("mode-openings").onclick = () => switchMode(MODE.OPENINGS);
-      document.getElementById("mode-animes").onclick = () => switchMode(MODE.ANIMES);
-      document.getElementById("toggle-theme").onclick = () => {
-        document.body.classList.toggle("dark");
-      };
-      switchMode(MODE.OPENINGS);
     });
 
-    // JSON embarqués directement ici
-    const openingsData = [
-      {
-        "title": "My Hero Academia",
-        "youtubeUrls": ["https://www.youtube.com/watch?v=L1FdEBTJXus"]
-      },
-      {
-        "title": "Hunter X Hunter",
-        "youtubeUrls": ["https://www.youtube.com/watch?v=faqmNf_fZlE"]
-      }
-    ];
+    // Ajouter winrate
+    const results = animes.map((a, i) => ({
+      title: a.title,
+      image: a.image,
+      wins: stats[i].wins,
+      matches: stats[i].matches,
+      winrate: stats[i].matches ? stats[i].wins / stats[i].matches : 0
+    }));
 
-    const animesData = [
-      {
-        "title": "Fullmetal Alchemist: Brotherhood",
-        "image": "https://cdn.myanimelist.net/images/anime/1208/94745l.jpg"
-      },
-      {
-        "title": "Attack on Titan",
-        "image": "https://cdn.myanimelist.net/images/anime/10/47347.jpg"
-      },
-      {
-        "title": "Death Note",
-        "image": "https://cdn.myanimelist.net/images/anime/9/9453.jpg"
-      },
-      {
-        "title": "One Punch Man",
-        "image": "https://cdn.myanimelist.net/images/anime/12/76049.jpg"
-      }
-    ];
-  </script>
+    // Trier par winrate décroissant, puis victoires, puis titre
+    results.sort((a,b) => b.winrate - a.winrate || b.wins - a.wins || a.title.localeCompare(b.title));
+
+    // Affichage
+    const classementDiv = document.querySelector("#classement");
+    classementDiv.innerHTML = "<h2>Classement final</h2>";
+
+    const table = document.createElement("table");
+    const thead = document.createElement("thead");
+    thead.innerHTML = `<tr>
+      <th>#</th>
+      <th>Anime</th>
+      <th>Victoires</th>
+      <th>Matchs joués</th>
+      <th>Winrate</th>
+    </tr>`;
+    table.appendChild(thead);
+
+    const tbody = document.createElement("tbody");
+    results.forEach((r, i) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${i+1}</td>
+        <td style="text-align:left;">
+          <img src="${r.image}" alt="${r.title}" style="width:40px; vertical-align:middle; border-radius:5px; margin-right:8px;" />
+          ${r.title}
+        </td>
+        <td>${r.wins}</td>
+        <td>${r.matches}</td>
+        <td>${(r.winrate*100).toFixed(1)}%</td>
+      `;
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    classementDiv.appendChild(table);
+  }
+
+  // Démarrage
+  showMatch();
+
+})();
+</script>
+
 </body>
 </html>
+
