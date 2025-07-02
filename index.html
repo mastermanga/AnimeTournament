@@ -3,385 +3,199 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Anime & Opening 1v1 Championship</title>
+<title>Tournoi Suisse + Bracket Éliminatoire</title>
 <style>
   body {
-    background-color: #121212;
+    font-family: Arial, sans-serif;
+    background: #121212;
     color: #eee;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    margin: 0; padding: 20px;
-    display: flex; flex-direction: column; align-items: center;
+    padding: 20px;
+    max-width: 900px;
+    margin: auto;
   }
-  h1 {
-    margin-bottom: 10px;
+  h1, h2 {
+    color: #70c1b3;
   }
-  #mode-select {
-    margin-bottom: 20px;
+  .section {
+    margin-bottom: 40px;
   }
-  #mode-select button {
-    background-color: #333;
-    color: #eee;
-    border: none;
-    padding: 10px 20px;
-    margin: 0 5px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 16px;
-  }
-  #mode-select button.active {
-    background-color: #555;
-  }
-
-  #duel-container {
-    display: flex; gap: 40px; margin: 20px 0;
-    max-width: 700px;
-    justify-content: center;
-  }
-  .anime, .opening {
+  .round {
     background: #222;
-    padding: 10px;
-    border-radius: 10px;
-    width: 300px;
-    text-align: center;
-    box-shadow: 0 0 10px #333;
-    cursor: pointer;
-    user-select: none;
-    transition: transform 0.2s;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-  .anime:hover, .opening:hover {
-    transform: scale(1.05);
-  }
-  .anime img {
-    width: 100%;
-    height: auto;
-    border-radius: 10px;
-  }
-  .opening iframe {
-    width: 100%;
-    height: 300px; /* Agrandi ici */
-    border-radius: 10px;
-    pointer-events: auto;
-  }
-  #buttons {
-    margin-top: 10px;
-    display: flex;
-    gap: 20px;
-    max-width: 700px;
-  }
-  #buttons button {
-    background-color: #444;
-    color: #eee;
-    border: none;
-    padding: 12px 20px;
-    font-size: 16px;
-    cursor: pointer;
+    padding: 12px;
     border-radius: 8px;
-    transition: background-color 0.3s;
-    flex: 1;
+    margin: 8px 0;
   }
-  #buttons button:hover {
-    background-color: #666;
+  .anime {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 6px;
+    margin: 4px 8px 4px 0;
+    background: #444;
   }
-
-  #classement {
-    margin-top: 30px;
-    max-width: 700px;
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 25px;
+  .qualified {
+    background: #4caf50;
+    color: #fff;
   }
-  .classement-item {
-    background-color: #222;
-    padding: 15px;
-    border-radius: 12px;
-    box-shadow: 0 0 15px #333;
-    text-align: center;
-    color: #eee;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+  .eliminated {
+    background: #b71c1c;
+    color: #fff;
+    text-decoration: line-through;
   }
-  .classement-item img {
-    width: 100%;
-    max-width: 160px;
-    border-radius: 12px;
-    margin-bottom: 10px;
-    user-select: none;
-    pointer-events: none;
-  }
-  .classement-item iframe {
-    width: 100%;
-    height: 150px;
-    border-radius: 10px;
-    margin-top: 10px;
-  }
-  .classement-item .rank {
-    font-size: 18px;
+  .match-winner {
+    color: #70c1b3;
     font-weight: bold;
-    margin-bottom: 6px;
-  }
-  .classement-item .title {
-    font-size: 16px;
   }
 </style>
 </head>
 <body>
 
-<h1>1v1 Championship</h1>
+<h1>Simulation Tournoi Suisse + Bracket Éliminatoire</h1>
 
-<div id="mode-select">
-  <button id="mode-anime" class="active" aria-pressed="true">Animes</button>
-  <button id="mode-opening" aria-pressed="false">Openings</button>
-</div>
-
-<div id="duel-container">
-  <!-- Conteneurs dynamiques -->
-</div>
-
-<div id="buttons">
-  <!-- Boutons dynamiques -->
-</div>
-
-<div id="classement"></div>
+<div id="output" class="section"></div>
 
 <script>
 (() => {
-  const TOTAL_ITEMS = 16;
-  const MAX_DUELS_PER_ITEM = 5;
+  const animeNames = Array.from({ length: 16 }, (_, i) => `A${i + 1}`);
 
-  let mode = 'anime';
-  let data = [];
-  let items = [];
-  let matches = [];
-  let duelCounts = [];
-  let currentMatchIndex = 0;
-
-  const duelContainer = document.querySelector('#duel-container');
-  const buttonsDiv = document.querySelector('#buttons');
-  const classementDiv = document.querySelector('#classement');
-
-  const modeAnimeBtn = document.getElementById('mode-anime');
-  const modeOpeningBtn = document.getElementById('mode-opening');
-
-  modeAnimeBtn.onclick = () => switchMode('anime');
-  modeOpeningBtn.onclick = () => switchMode('opening');
-
-  function switchMode(newMode) {
-    if (mode === newMode) return;
-    mode = newMode;
-    modeAnimeBtn.classList.toggle('active', mode === 'anime');
-    modeAnimeBtn.setAttribute('aria-pressed', mode === 'anime');
-    modeOpeningBtn.classList.toggle('active', mode === 'opening');
-    modeOpeningBtn.setAttribute('aria-pressed', mode === 'opening');
-
-    reset();
-    loadDataAndStart();
-  }
-
-  function reset() {
-    data = [];
-    items = [];
-    matches = [];
-    duelCounts = [];
-    currentMatchIndex = 0;
-    duelContainer.innerHTML = '';
-    buttonsDiv.innerHTML = '';
-    buttonsDiv.style.display = 'flex';
-    duelContainer.style.display = 'flex';
-    classementDiv.innerHTML = '';
+  class Anime {
+    constructor(name) {
+      this.name = name;
+      this.wins = 0;
+      this.losses = 0;
+      this.eliminated = false;
+      this.qualified = false;
+    }
   }
 
   function shuffle(array) {
-    for(let i = array.length - 1; i > 0; i--){
+    for (let i = array.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [array[i], array[j]] = [array[j], array[i]];
     }
     return array;
   }
 
-  async function loadDataAndStart() {
-    const url = mode === 'anime' ? 'animes.json' : 'openings.json';
-    try {
-      const res = await fetch(url);
-      if(!res.ok) throw new Error("Erreur chargement " + url);
-      data = await res.json();
+  function simulateSwiss(animeList) {
+    const log = [];
+    let round = 1;
 
-      shuffle(data);
-      items = data.slice(0, TOTAL_ITEMS);
+    while (true) {
+      const active = animeList.filter(a => !a.eliminated && !a.qualified);
+      if (active.length < 2) break;
 
-      duelCounts = new Array(TOTAL_ITEMS).fill(0);
-      generateMatches();
-      setupUI();
-      showMatch();
-    } catch(e) {
-      alert(e.message);
-    }
-  }
+      // Group by W-L record
+      const groups = {};
+      active.forEach(a => {
+        const key = `${a.wins}-${a.losses}`;
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(a);
+      });
 
-  function generateMatches() {
-    matches = [];
-    const possiblePairs = [];
-    for(let i = 0; i < TOTAL_ITEMS; i++){
-      for(let j = i + 1; j < TOTAL_ITEMS; j++){
-        possiblePairs.push({i1: i, i2: j, winner: 0});
-      }
-    }
-    shuffle(possiblePairs);
+      log.push(`<h2>Round ${round}</h2>`);
 
-    for(const p of possiblePairs){
-      if(duelCounts[p.i1] < MAX_DUELS_PER_ITEM && duelCounts[p.i2] < MAX_DUELS_PER_ITEM){
-        matches.push(p);
-        duelCounts[p.i1]++;
-        duelCounts[p.i2]++;
-      }
-      if(duelCounts.every(c => c >= MAX_DUELS_PER_ITEM)) break;
-    }
-  }
+      // For each group, pair and simulate matches
+      for (const key in groups) {
+        const group = shuffle(groups[key]);
+        for (let i = 0; i < group.length; i += 2) {
+          if (i + 1 >= group.length) break; // odd number, last anime waits this round
 
-  function setupUI() {
-    duelContainer.innerHTML = '';
-    buttonsDiv.innerHTML = '';
+          const a1 = group[i];
+          const a2 = group[i + 1];
+          // Random winner
+          const winner = Math.random() < 0.5 ? a1 : a2;
+          const loser = winner === a1 ? a2 : a1;
 
-    const div1 = document.createElement('div');
-    const div2 = document.createElement('div');
+          winner.wins++;
+          loser.losses++;
 
-    if(mode === 'anime'){
-      div1.className = 'anime';
-      div2.className = 'anime';
+          if (winner.wins >= 3) winner.qualified = true;
+          if (loser.losses >= 3) loser.eliminated = true;
 
-      div1.innerHTML = `<img src="" alt="" /><h3></h3>`;
-      div2.innerHTML = `<img src="" alt="" /><h3></h3>`;
-    } else {
-      div1.className = 'opening';
-      div2.className = 'opening';
-
-      div1.innerHTML = `<iframe src="" frameborder="0" allowfullscreen></iframe><h3></h3>`;
-      div2.innerHTML = `<iframe src="" frameborder="0" allowfullscreen></iframe><h3></h3>`;
-    }
-
-    duelContainer.appendChild(div1);
-    duelContainer.appendChild(div2);
-
-    const btn1 = document.createElement('button');
-    const btn2 = document.createElement('button');
-    btn1.id = 'choose1';
-    btn2.id = 'choose2';
-
-    btn1.setAttribute('aria-label', 'Choisir premier ' + mode);
-    btn2.setAttribute('aria-label', 'Choisir second ' + mode);
-
-    buttonsDiv.appendChild(btn1);
-    buttonsDiv.appendChild(btn2);
-
-    btn1.onclick = () => recordWin(1);
-    btn2.onclick = () => recordWin(2);
-    div1.onclick = () => recordWin(1);
-    div2.onclick = () => recordWin(2);
-  }
-
-  function getYouTubeEmbedUrl(youtubeUrl) {
-    let videoId = null;
-    try {
-      const urlObj = new URL(youtubeUrl);
-      if(urlObj.hostname.includes('youtube.com')){
-        videoId = urlObj.searchParams.get('v');
-      } else if(urlObj.hostname.includes('youtu.be')){
-        videoId = urlObj.pathname.slice(1);
-      }
-    } catch {}
-    if(videoId) return `https://www.youtube.com/embed/${videoId}?rel=0&autoplay=0`;
-    return null;
-  }
-
-  function showMatch() {
-    if(currentMatchIndex >= matches.length){
-      showClassement();
-      return;
-    }
-    const match = matches[currentMatchIndex];
-    const i1 = match.i1;
-    const i2 = match.i2;
-
-    const divs = duelContainer.children;
-
-    if(mode === 'anime'){
-      divs[0].querySelector('img').src = items[i1].image;
-      divs[0].querySelector('img').alt = items[i1].title;
-      divs[0].querySelector('h3').textContent = items[i1].title;
-
-      divs[1].querySelector('img').src = items[i2].image;
-      divs[1].querySelector('img').alt = items[i2].title;
-      divs[1].querySelector('h3').textContent = items[i2].title;
-    } else {
-      const url1 = getYouTubeEmbedUrl(items[i1].youtubeUrls?.[0] || '') || '';
-      const url2 = getYouTubeEmbedUrl(items[i2].youtubeUrls?.[0] || '') || '';
-
-      divs[0].querySelector('iframe').src = url1;
-      divs[1].querySelector('iframe').src = url2;
-
-      divs[0].querySelector('h3').textContent = items[i1].title;
-      divs[1].querySelector('h3').textContent = items[i2].title;
-    }
-
-    buttonsDiv.children[0].textContent = items[i1].title;
-    buttonsDiv.children[1].textContent = items[i2].title;
-  }
-
-  function recordWin(winner) {
-    matches[currentMatchIndex].winner = winner;
-    currentMatchIndex++;
-    showMatch();
-  }
-
-  function showClassement() {
-    buttonsDiv.style.display = 'none';
-    duelContainer.style.display = 'none';
-
-    const stats = new Array(TOTAL_ITEMS).fill(0);
-    matches.forEach(m => {
-      if(m.winner === 1) stats[m.i1]++;
-      else if(m.winner === 2) stats[m.i2]++;
-    });
-
-    const results = items.map((item, i) => ({
-      title: item.title,
-      image: item.image || '',
-      wins: stats[i],
-      youtubeUrl: (item.youtubeUrls && item.youtubeUrls[0]) || null
-    }));
-
-    results.sort((a,b) => b.wins - a.wins || a.title.localeCompare(b.title));
-
-    classementDiv.innerHTML = `<h2>Classement final - ${mode === 'anime' ? 'Animes' : 'Openings'}</h2>`;
-
-    results.forEach((r,i) => {
-      const itemDiv = document.createElement('div');
-      itemDiv.className = 'classement-item';
-
-      let video = '';
-      if(mode === 'opening' && r.youtubeUrl){
-        const embed = getYouTubeEmbedUrl(r.youtubeUrl);
-        if(embed){
-          video = `<iframe src="${embed}" frameborder="0" allowfullscreen></iframe>`;
+          log.push(`<div class="round">${a1.name} vs ${a2.name} → <span class="match-winner">${winner.name}</span> gagne</div>`);
         }
       }
+      round++;
+    }
 
-      itemDiv.innerHTML = `
-        <div class="rank">#${i+1}</div>
-        ${r.image ? `<img src="${r.image}" alt="${r.title}"/>` : ''}
-        <div class="title">${r.title}</div>
-        ${video}
-      `;
-      classementDiv.appendChild(itemDiv);
+    // If less than 8 qualified, do playoffs between remaining active to fill slots
+    let qualified = animeList.filter(a => a.qualified);
+    let stillActive = animeList.filter(a => !a.eliminated && !a.qualified);
+    while (qualified.length < 8 && stillActive.length > 1) {
+      log.push(`<h2>Playoffs pour qualification (${qualified.length} qualifiés)</h2>`);
+      stillActive = shuffle(stillActive);
+
+      for (let i = 0; i < stillActive.length; i += 2) {
+        if (i + 1 >= stillActive.length) break;
+
+        const a1 = stillActive[i];
+        const a2 = stillActive[i + 1];
+        const winner = Math.random() < 0.5 ? a1 : a2;
+        const loser = winner === a1 ? a2 : a1;
+
+        winner.wins++;
+        loser.losses++;
+
+        if (winner.wins >= 3) winner.qualified = true;
+        if (loser.losses >= 3) loser.eliminated = true;
+
+        log.push(`<div class="round">${a1.name} vs ${a2.name} → <span class="match-winner">${winner.name}</span> gagne</div>`);
+      }
+
+      qualified = animeList.filter(a => a.qualified);
+      stillActive = animeList.filter(a => !a.eliminated && !a.qualified);
+    }
+
+    qualified = animeList.filter(a => a.qualified);
+
+    // Sort qualified by wins desc, name asc
+    qualified.sort((a,b) => b.wins - a.wins || a.name.localeCompare(b.name));
+
+    log.push("<h2>Qualifiés pour le bracket éliminatoire (Top 8)</h2>");
+    log.push('<div>');
+    qualified.forEach((a, i) => {
+      log.push(`<span class="anime qualified">#${i + 1} ${a.name} (${a.wins}W - ${a.losses}L)</span>`);
     });
+    log.push('</div>');
+
+    return { log, qualified };
   }
 
-  loadDataAndStart();
+  function simulateBracket(qualifiedList) {
+    const log = ["<h2>Bracket Éliminatoire</h2>"];
+    const match = (a, b) => (Math.random() < 0.5 ? a : b);
+
+    // Seed 1 vs 8, 2 vs 7, etc.
+    let roundAnimes = qualifiedList.slice();
+    let roundNum = 1;
+    while (roundAnimes.length > 1) {
+      log.push(`<h3>Round ${roundNum} (${roundAnimes.length} participants)</h3>`);
+      const winners = [];
+      for (let i = 0; i < roundAnimes.length / 2; i++) {
+        const a = roundAnimes[i];
+        const b = roundAnimes[roundAnimes.length - 1 - i];
+        const winner = match(a, b);
+        winners.push(winner);
+        log.push(`<div class="round">${a.name} vs ${b.name} → <span class="match-winner">${winner.name}</span> gagne</div>`);
+      }
+      roundAnimes = winners;
+      roundNum++;
+    }
+
+    log.push(`<h2>🏆 Vainqueur du tournoi : <span class="match-winner">${roundAnimes[0].name}</span></h2>`);
+    return log;
+  }
+
+  // Main execution
+  const animeList = animeNames.map(name => new Anime(name));
+  const swissResult = simulateSwiss(animeList);
+  const bracketResult = simulateBracket(swissResult.qualified);
+
+  const output = [...swissResult.log, ...bracketResult].join("");
+  document.getElementById("output").innerHTML = output;
+
 })();
 </script>
 
 </body>
 </html>
+
