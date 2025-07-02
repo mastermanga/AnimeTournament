@@ -3,59 +3,91 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>1v1 Championship</title>
+<title>Anime & Opening 1v1 Championship</title>
 <style>
   body {
     background-color: #121212;
     color: #eee;
-    font-family: Arial, sans-serif;
-    padding: 20px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0; padding: 20px;
+    display: flex; flex-direction: column; align-items: center;
+  }
+  h1 {
+    margin-bottom: 10px;
+  }
+  #mode-select {
+    margin-bottom: 20px;
+  }
+  #mode-select button {
+    background-color: #333;
+    color: #eee;
+    border: none;
+    padding: 10px 20px;
+    margin: 0 5px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+  }
+  #mode-select button.active {
+    background-color: #555;
+  }
+
+  #duel-container {
+    display: flex; gap: 40px; margin: 20px 0;
+    max-width: 700px;
+    justify-content: center;
+  }
+  .anime, .opening {
+    background: #222;
+    padding: 10px;
+    border-radius: 10px;
+    width: 300px;
+    text-align: center;
+    box-shadow: 0 0 10px #333;
+    cursor: pointer;
+    user-select: none;
+    transition: transform 0.2s;
     display: flex;
     flex-direction: column;
     align-items: center;
   }
-  h1, h2 {
-    margin-bottom: 20px;
+  .anime:hover, .opening:hover {
+    transform: scale(1.05);
   }
-  #duel-container {
-    display: flex;
-    gap: 40px;
-    max-width: 700px;
-    justify-content: center;
-  }
-  .item {
-    background: #222;
-    border-radius: 10px;
-    padding: 10px;
-    width: 300px;
-    text-align: center;
-    cursor: pointer;
-  }
-  .item img {
+  .anime img {
     width: 100%;
+    height: auto;
     border-radius: 10px;
   }
-  .item iframe {
+  .opening iframe {
     width: 100%;
     height: 300px;
     border-radius: 10px;
+    pointer-events: auto;
   }
   #buttons {
-    margin-top: 20px;
+    margin-top: 10px;
     display: flex;
     gap: 20px;
+    max-width: 700px;
   }
   #buttons button {
-    padding: 10px 20px;
+    background-color: #444;
+    color: #eee;
+    border: none;
+    padding: 12px 20px;
     font-size: 16px;
     cursor: pointer;
     border-radius: 8px;
-    background-color: #444;
-    border: none;
-    color: white;
+    transition: background-color 0.3s;
+    flex: 1;
   }
+  #buttons button:hover {
+    background-color: #666;
+  }
+
   #classement {
-    margin-top: 40px;
+    margin-top: 30px;
     max-width: 700px;
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -65,11 +97,18 @@
     background-color: #222;
     padding: 15px;
     border-radius: 12px;
+    box-shadow: 0 0 15px #333;
     text-align: center;
+    color: #eee;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
   .classement-item img {
+    width: 100%;
     max-width: 160px;
     border-radius: 12px;
+    margin-bottom: 10px;
     user-select: none;
     pointer-events: none;
   }
@@ -79,9 +118,13 @@
     border-radius: 10px;
     margin-top: 10px;
   }
-  .rank {
+  .classement-item .rank {
+    font-size: 18px;
     font-weight: bold;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
+  }
+  .classement-item .title {
+    font-size: 16px;
   }
 </style>
 </head>
@@ -89,8 +132,19 @@
 
 <h1>1v1 Championship</h1>
 
-<div id="duel-container"></div>
-<div id="buttons"></div>
+<div id="mode-select">
+  <button id="mode-anime" class="active" aria-pressed="true">Animes</button>
+  <button id="mode-opening" aria-pressed="false">Openings</button>
+</div>
+
+<div id="duel-container">
+  <!-- Conteneurs dynamiques -->
+</div>
+
+<div id="buttons">
+  <!-- Boutons dynamiques -->
+</div>
+
 <div id="classement"></div>
 
 <script>
@@ -98,84 +152,90 @@
   const TOTAL_ITEMS = 16;
   const MAX_DUELS_PER_ITEM = 5;
 
-  // Mode : 'anime' ou 'opening'
   let mode = 'anime';
-
-  // Tes données (exemple) — Remplace par ton fetch ou tes données réelles
-  const allData = {
-    anime: [
-      // Exemples fictifs
-      {title: "Anime 1", image: "https://placehold.co/300x400?text=Anime+1"},
-      {title: "Anime 2", image: "https://placehold.co/300x400?text=Anime+2"},
-      {title: "Anime 3", image: "https://placehold.co/300x400?text=Anime+3"},
-      {title: "Anime 4", image: "https://placehold.co/300x400?text=Anime+4"},
-      {title: "Anime 5", image: "https://placehold.co/300x400?text=Anime+5"},
-      {title: "Anime 6", image: "https://placehold.co/300x400?text=Anime+6"},
-      {title: "Anime 7", image: "https://placehold.co/300x400?text=Anime+7"},
-      {title: "Anime 8", image: "https://placehold.co/300x400?text=Anime+8"},
-      {title: "Anime 9", image: "https://placehold.co/300x400?text=Anime+9"},
-      {title: "Anime 10", image: "https://placehold.co/300x400?text=Anime+10"},
-      {title: "Anime 11", image: "https://placehold.co/300x400?text=Anime+11"},
-      {title: "Anime 12", image: "https://placehold.co/300x400?text=Anime+12"},
-      {title: "Anime 13", image: "https://placehold.co/300x400?text=Anime+13"},
-      {title: "Anime 14", image: "https://placehold.co/300x400?text=Anime+14"},
-      {title: "Anime 15", image: "https://placehold.co/300x400?text=Anime+15"},
-      {title: "Anime 16", image: "https://placehold.co/300x400?text=Anime+16"},
-    ],
-    opening: [
-      // Exemple simplifié avec URL Youtube (youtubeUrls)
-      {title: "Opening 1", youtubeUrls: ["https://www.youtube.com/watch?v=VIDEOID1"]},
-      {title: "Opening 2", youtubeUrls: ["https://www.youtube.com/watch?v=VIDEOID2"]},
-      {title: "Opening 3", youtubeUrls: ["https://www.youtube.com/watch?v=VIDEOID3"]},
-      {title: "Opening 4", youtubeUrls: ["https://www.youtube.com/watch?v=VIDEOID4"]},
-      {title: "Opening 5", youtubeUrls: ["https://www.youtube.com/watch?v=VIDEOID5"]},
-      {title: "Opening 6", youtubeUrls: ["https://www.youtube.com/watch?v=VIDEOID6"]},
-      {title: "Opening 7", youtubeUrls: ["https://www.youtube.com/watch?v=VIDEOID7"]},
-      {title: "Opening 8", youtubeUrls: ["https://www.youtube.com/watch?v=VIDEOID8"]},
-      {title: "Opening 9", youtubeUrls: ["https://www.youtube.com/watch?v=VIDEOID9"]},
-      {title: "Opening 10", youtubeUrls: ["https://www.youtube.com/watch?v=VIDEOID10"]},
-      {title: "Opening 11", youtubeUrls: ["https://www.youtube.com/watch?v=VIDEOID11"]},
-      {title: "Opening 12", youtubeUrls: ["https://www.youtube.com/watch?v=VIDEOID12"]},
-      {title: "Opening 13", youtubeUrls: ["https://www.youtube.com/watch?v=VIDEOID13"]},
-      {title: "Opening 14", youtubeUrls: ["https://www.youtube.com/watch?v=VIDEOID14"]},
-      {title: "Opening 15", youtubeUrls: ["https://www.youtube.com/watch?v=VIDEOID15"]},
-      {title: "Opening 16", youtubeUrls: ["https://www.youtube.com/watch?v=VIDEOID16"]},
-    ]
-  };
-
+  let data = [];
   let items = [];
   let matches = [];
   let duelCounts = [];
   let currentMatchIndex = 0;
 
-  const duelContainer = document.getElementById('duel-container');
-  const buttonsDiv = document.getElementById('buttons');
-  const classementDiv = document.getElementById('classement');
+  const duelContainer = document.querySelector('#duel-container');
+  const buttonsDiv = document.querySelector('#buttons');
+  const classementDiv = document.querySelector('#classement');
+
+  const modeAnimeBtn = document.getElementById('mode-anime');
+  const modeOpeningBtn = document.getElementById('mode-opening');
+
+  modeAnimeBtn.onclick = () => switchMode('anime');
+  modeOpeningBtn.onclick = () => switchMode('opening');
+
+  function switchMode(newMode) {
+    if (mode === newMode) return;
+    mode = newMode;
+    modeAnimeBtn.classList.toggle('active', mode === 'anime');
+    modeAnimeBtn.setAttribute('aria-pressed', mode === 'anime');
+    modeOpeningBtn.classList.toggle('active', mode === 'opening');
+    modeOpeningBtn.setAttribute('aria-pressed', mode === 'opening');
+
+    reset();
+    loadDataAndStart();
+  }
+
+  function reset() {
+    data = [];
+    items = [];
+    matches = [];
+    duelCounts = [];
+    currentMatchIndex = 0;
+    duelContainer.innerHTML = '';
+    buttonsDiv.innerHTML = '';
+    buttonsDiv.style.display = 'flex';
+    duelContainer.style.display = 'flex';
+    classementDiv.innerHTML = '';
+  }
 
   function shuffle(array) {
     for(let i = array.length - 1; i > 0; i--){
       const j = Math.floor(Math.random() * (i + 1));
       [array[i], array[j]] = [array[j], array[i]];
     }
+    return array;
+  }
+
+  async function loadDataAndStart() {
+    const url = mode === 'anime' ? 'animes.json' : 'openings.json';
+    try {
+      const res = await fetch(url);
+      if(!res.ok) throw new Error("Erreur chargement " + url);
+      data = await res.json();
+
+      shuffle(data);
+      items = data.slice(0, TOTAL_ITEMS);
+
+      duelCounts = new Array(TOTAL_ITEMS).fill(0);
+      generateMatches();
+      setupUI();
+      showMatch();
+    } catch(e) {
+      alert(e.message);
+    }
   }
 
   function generateMatches() {
     matches = [];
-    duelCounts = new Array(TOTAL_ITEMS).fill(0);
-    const pairs = [];
-
+    const possiblePairs = [];
     for(let i = 0; i < TOTAL_ITEMS; i++){
       for(let j = i + 1; j < TOTAL_ITEMS; j++){
-        pairs.push({i1: i, i2: j, winner: 0});
+        possiblePairs.push({i1: i, i2: j, winner: 0});
       }
     }
-    shuffle(pairs);
+    shuffle(possiblePairs);
 
-    for(const pair of pairs){
-      if(duelCounts[pair.i1] < MAX_DUELS_PER_ITEM && duelCounts[pair.i2] < MAX_DUELS_PER_ITEM){
-        matches.push(pair);
-        duelCounts[pair.i1]++;
-        duelCounts[pair.i2]++;
+    for(const p of possiblePairs){
+      if(duelCounts[p.i1] < MAX_DUELS_PER_ITEM && duelCounts[p.i2] < MAX_DUELS_PER_ITEM){
+        matches.push(p);
+        duelCounts[p.i1]++;
+        duelCounts[p.i2]++;
       }
       if(duelCounts.every(c => c >= MAX_DUELS_PER_ITEM)) break;
     }
@@ -185,16 +245,19 @@
     duelContainer.innerHTML = '';
     buttonsDiv.innerHTML = '';
 
-    // Deux conteneurs pour les items à comparer
     const div1 = document.createElement('div');
-    div1.classList.add('item');
     const div2 = document.createElement('div');
-    div2.classList.add('item');
 
     if(mode === 'anime'){
+      div1.className = 'anime';
+      div2.className = 'anime';
+
       div1.innerHTML = `<img src="" alt="" /><h3></h3>`;
       div2.innerHTML = `<img src="" alt="" /><h3></h3>`;
     } else {
+      div1.className = 'opening';
+      div2.className = 'opening';
+
       div1.innerHTML = `<iframe src="" frameborder="0" allowfullscreen></iframe><h3></h3>`;
       div2.innerHTML = `<iframe src="" frameborder="0" allowfullscreen></iframe><h3></h3>`;
     }
@@ -202,11 +265,13 @@
     duelContainer.appendChild(div1);
     duelContainer.appendChild(div2);
 
-    // Boutons de choix
     const btn1 = document.createElement('button');
-    btn1.textContent = "Choisir à gauche";
     const btn2 = document.createElement('button');
-    btn2.textContent = "Choisir à droite";
+    btn1.id = 'choose1';
+    btn2.id = 'choose2';
+
+    btn1.setAttribute('aria-label', 'Choisir premier ' + mode);
+    btn2.setAttribute('aria-label', 'Choisir second ' + mode);
 
     buttonsDiv.appendChild(btn1);
     buttonsDiv.appendChild(btn2);
@@ -217,17 +282,17 @@
     div2.onclick = () => recordWin(2);
   }
 
-  function getYoutubeEmbed(url){
+  function getYouTubeEmbedUrl(youtubeUrl) {
+    let videoId = null;
     try {
-      const urlObj = new URL(url);
-      let videoId = null;
+      const urlObj = new URL(youtubeUrl);
       if(urlObj.hostname.includes('youtube.com')){
         videoId = urlObj.searchParams.get('v');
       } else if(urlObj.hostname.includes('youtu.be')){
-        videoId = urlObj.pathname.substring(1);
+        videoId = urlObj.pathname.slice(1);
       }
-      if(videoId) return `https://www.youtube.com/embed/${videoId}?rel=0&autoplay=0`;
     } catch {}
+    if(videoId) return `https://www.youtube.com/embed/${videoId}?rel=0&autoplay=0`;
     return null;
   }
 
@@ -236,7 +301,6 @@
       showClassement();
       return;
     }
-
     const match = matches[currentMatchIndex];
     const i1 = match.i1;
     const i2 = match.i2;
@@ -252,13 +316,13 @@
       divs[1].querySelector('img').alt = items[i2].title;
       divs[1].querySelector('h3').textContent = items[i2].title;
     } else {
-      const url1 = getYoutubeEmbed(items[i1].youtubeUrls[0]);
-      const url2 = getYoutubeEmbed(items[i2].youtubeUrls[0]);
+      const url1 = getYouTubeEmbedUrl(items[i1].youtubeUrls?.[0] || '') || '';
+      const url2 = getYouTubeEmbedUrl(items[i2].youtubeUrls?.[0] || '') || '';
 
-      divs[0].querySelector('iframe').src = url1 || '';
+      divs[0].querySelector('iframe').src = url1;
+      divs[1].querySelector('iframe').src = url2;
+
       divs[0].querySelector('h3').textContent = items[i1].title;
-
-      divs[1].querySelector('iframe').src = url2 || '';
       divs[1].querySelector('h3').textContent = items[i2].title;
     }
 
@@ -273,61 +337,40 @@
   }
 
   function showClassement() {
-    // On cache duel + buttons
-    duelContainer.style.display = 'none';
     buttonsDiv.style.display = 'none';
+    duelContainer.style.display = 'none';
 
-    // Calcul des victoires
-    const wins = new Array(TOTAL_ITEMS).fill(0);
+    // Calcul des victoires par anime
+    const stats = new Array(TOTAL_ITEMS).fill(0);
     matches.forEach(m => {
-      if(m.winner === 1) wins[m.i1]++;
-      else if(m.winner === 2) wins[m.i2]++;
+      if(m.winner === 1) stats[m.i1]++;
+      else if(m.winner === 2) stats[m.i2]++;
     });
 
-    // On prépare les résultats, triés par victoires décroissantes
-    const results = items.map((item, idx) => ({
+    // Création des résultats avec uniquement les 16 items
+    const results = items.map((item, i) => ({
       title: item.title,
       image: item.image || '',
-      wins: wins[idx],
-      youtubeUrl: item.youtubeUrls ? item.youtubeUrls[0] : null
+      wins: stats[i],
+      youtubeUrl: (item.youtubeUrls && item.youtubeUrls[0]) || null
     }));
 
+    // Tri décroissant sur le nombre de victoires, puis alphabétique
     results.sort((a,b) => b.wins - a.wins || a.title.localeCompare(b.title));
 
-    classementDiv.innerHTML = `<h2>Classement final (${mode === 'anime' ? 'Animes' : 'Openings'})</h2>`;
+    classementDiv.innerHTML = `<h2>Classement final - ${mode === 'anime' ? 'Animes' : 'Openings'}</h2>`;
 
     results.forEach((r, i) => {
       const itemDiv = document.createElement('div');
       itemDiv.className = 'classement-item';
 
-      let mediaHtml = '';
-      if(mode === 'anime'){
-        mediaHtml = `<img src="${r.image}" alt="${r.title}" />`;
-      } else if(r.youtubeUrl){
-        const embedUrl = getYoutubeEmbed(r.youtubeUrl);
-        if(embedUrl) mediaHtml = `<iframe src="${embedUrl}" frameborder="0" allowfullscreen></iframe>`;
+      let video = '';
+      if(mode === 'opening' && r.youtubeUrl){
+        const embed = getYouTubeEmbedUrl(r.youtubeUrl);
+        if(embed){
+          video = `<iframe src="${embed}" frameborder="0" allowfullscreen></iframe>`;
+        }
       }
 
       itemDiv.innerHTML = `
-        <div class="rank">#${i+1} — ${r.wins} victoire${r.wins > 1 ? 's' : ''}</div>
-        <div class="title">${r.title}</div>
-        ${mediaHtml}
-      `;
-      classementDiv.appendChild(itemDiv);
-    });
-  }
-
-  function start() {
-    items = allData[mode].slice(0, TOTAL_ITEMS);
-    generateMatches();
-    setupUI();
-    showMatch();
-  }
-
-  start();
-
-})();
-</script>
-
-</body>
-</html>
+        <div class="
